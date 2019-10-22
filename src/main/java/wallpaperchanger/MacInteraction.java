@@ -12,21 +12,6 @@ import javax.imageio.ImageIO;
 
 class MacInteraction implements OSInteraction {
     @Override
-    public void registerTrayIcon(URL icon) throws IOException, AWTException {
-        final TrayIcon trayIcon;
-
-        if(SystemTray.isSupported()) {
-            SystemTray tray = SystemTray.getSystemTray();
-            trayIcon = new TrayIcon(ImageIO.read(icon), "Wallpaper Changer");
-            tray.add(trayIcon);
-        } else {
-            // This should never happen, unless you're not running in graphical mode
-            // In which case how do you even have wallpapers
-            throw new UnsupportedOperationException();
-        }
-    }
-
-    @Override
     public Exception changeWallpaper(File file) throws Exception {
         String fileLocation = file.getAbsolutePath().replace("\"", "\\\"");
         String[] args = {

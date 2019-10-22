@@ -1,19 +1,25 @@
 package wallpaperchanger;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.awt.AWTException;
-import java.awt.Image;
+import java.awt.MenuItem;
+import java.awt.PopupMenu;
+import java.awt.SystemTray;
+import java.awt.TrayIcon;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import org.json.*;
 
 import javax.imageio.ImageIO;
 
@@ -30,6 +36,8 @@ public class WallpaperChanger {
 
     // TODO: Fix up all exceptions when we got the GUI down
 
+    // TODO: Linux / Win - https://stackoverflow.com/questions/19779980/is-it-possible-to-change-the-desktop-background-with-java-for-different-operatin?noredirect=1&lq=1
+
     public static void main(String[] arg) {
         // Get OSType
         OSType osType = getOS();
@@ -39,11 +47,8 @@ public class WallpaperChanger {
         URL wallpaperUrl = getURLs();
 
         // register tray icon
-        try {
-            OSInterface.registerTrayIcon(WallpaperChanger.class.getClassLoader().getResource("icon.jpg"));
-        } catch (IOException | AWTException e) {
-            e.printStackTrace();
-        }
+        registerTrayIcon(WallpaperChanger.class.getClassLoader().getResource("icon.png"));
+
 
         // Register timer to run
         Timer timer = new Timer();
@@ -163,5 +168,68 @@ public class WallpaperChanger {
             e.printStackTrace();
         }
         return null;
+    }
+
+    private static void registerTrayIcon(URL resource) {
+        final TrayIcon trayIcon;
+
+        final MouseListener mouseListener = new MouseListener() {
+
+            public void mouseClicked(MouseEvent e) {
+                System.out.println("Tray Icon - Mouse clicked!");
+            }
+
+            public void mouseEntered(MouseEvent e) {
+                System.out.println("Tray Icon - Mouse entered!");
+            }
+
+            public void mouseExited(MouseEvent e) {
+                System.out.println("Tray Icon - Mouse exited!");
+            }
+
+            public void mousePressed(MouseEvent e) {
+                System.out.println("Tray Icon - Mouse pressed!");
+            }
+
+            public void mouseReleased(MouseEvent e) {
+                System.out.println("Tray Icon - Mouse released!");
+            }
+        };
+
+        final ActionListener exitListener = e -> {
+            System.out.println("Exiting...");
+            System.exit(0);
+        };
+
+        try {
+            if(SystemTray.isSupported()) {
+                PopupMenu popup = new PopupMenu();
+                MenuItem defaultItem = new MenuItem("Exit");
+                defaultItem.addActionListener(exitListener);
+                popup.add(defaultItem);
+
+                trayIcon = new TrayIcon(ImageIO.read(resource), "Wallpaper Changer", popup);
+
+                final ActionListener actionListener = e -> trayIcon.displayMessage("Action Event",
+                        "An Action Event Has Been Performed!",
+                        TrayIcon.MessageType.INFO);
+
+                trayIcon.setImageAutoSize(true);
+                trayIcon.addActionListener(actionListener);
+                trayIcon.addMouseListener(mouseListener);
+                SystemTray tray = SystemTray.getSystemTray();
+                tray.add(trayIcon);
+
+
+            } else {
+                // This should never happen, unless you're not running in graphical mode
+                // In which case how do you even have wallpapers
+                throw new UnsupportedOperationException();
+            }
+        } catch (AWTException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
